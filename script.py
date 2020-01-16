@@ -2,7 +2,7 @@ import sqlite3
 from tkinter import *
 conn = sqlite3.connect('shared_power.db')
 c = conn.cursor()
-
+CURRENT = []
 try:
     c.execute("""
                 CREATE TABLE users(
@@ -19,7 +19,7 @@ except Exception as e:
 
 try:
     c.execute("""
-                CREATE TABLE tools(
+                CREATE TABLE tools (
                     tool_name text,
                     description text,
                     half_day_rate integer,
@@ -35,9 +35,25 @@ try:
                     description text,
                     quantity integer,
                     price integer,
-                    total integer
+                    total integer,
+                    username text,
+                    FOREIGN KEY (username) REFERENCES users(username)
                 )
             """)
+except Exception as e:
+    pass
+
+try :
+    c.execute("""
+        CREATE TABLE BOOKS(
+            username text,
+            tool_name text,
+            quantity integer,
+            FOREIGN KEY (username) REFERENCES users(username),
+            FOREIGN KEY (tool_name) REFERENCES tools(tool_name),
+            FOREIGN KEY(tool_quantity) REFERENCES tools(quantity)
+            )
+    """)
 except Exception as e:
     pass
 
@@ -70,24 +86,55 @@ def login(username, password,window):
     if username != '' and password != '':
         if validate(username, password):
             print('login')
+            SESSION.append(username)
             window.destroy()
             dashboard()
         else:
             print("Wrong password")
 
+def add_tool(tool_name , description, half_day_rate, full_day_rate, window):
+    c.execute("""
+                INSERT INTO tools VALUES(?, ? , ?, ?)
+            """, (tool_name , description, half_day_rate, full_day_rate))
+    conn.commit()
+    window.destroy()
+    dashboard()
 
 
+def hire(username, tool_name, quantity=1,window):
+    c.execute("""INSERT INTO books VALUES(?,?,?)""", (tools_name, quantity, username))
+    conn.commit()
+    print("{} is hired".format(tools_name))
 
-def loginpage():
-    l = Login()
+    window.destroy()
+    dashboard()
 
 def register_page(window):
     window.destroy()
     b = HomePage()
 
-def addtool(window):
+def searchtool(tool_name, window):
+    if tool_name is not None:
+        c.execute("""SELECT * FROM tools WHERE tool_name=?""", (tool_name, ))
+        a = c.fetchall()
+        window.destroy()
+        viewpage(a)
+
+def return_tool(tool_name, window):
+    c.execute("""SELECT * FROM books WHERE tool_name=?""", (tool_name, ))
+    a = c.fetchall()
+    c.execute("""SELECT * FROM tools WHERE tool_name=?""", (tool_name, ))
+    b = c.fetchall()
+    if len(a) == 1 and len(b) == 1:
+        c.execute("""INSERT INTO invoice VALUES(? , ? , ? , ? )""", (tool_name, a[0][2], b[0][3], a[0][2] * b[0][3], CURRENT[0]))
+        conn.commit()
+        c.execute("""SELECT * FROM books WHERE tool_name=?""", (tool_name, ))
+        c.delete()
+        conn.commit()
     window.destroy()
-    c = AddTool()
+    show_invoice()
+
+
 
 class HomePage:
 
@@ -129,8 +176,7 @@ class HomePage:
         window.mainloop()
 
 class Login:
-
-    def __init__(self):
+ def __init__(self):
         window = Tk()
         window.geometry("300x500")
         username_label = Label(window, text="Username")
@@ -155,6 +201,19 @@ class Dashboard:
         title = Label(window, text="Welcome to dashboard")
         button = Button(window, text="Add Tool" , command=lambda: addtool(window))
         button.pack()
+        search_label = Entry(window)
+        search_label.insert(0, 'SEARCH ITEM')
+        search_label.pack()
+        button1=Button(window,text='Search Tool',command=lambda: searchtool(search_label.get(),window))
+        button1.pack()
+        button2 = Button(window, text='Hired Tools' , command=lambda: hiretoolpage(window))
+        gap = Label(window)
+        gap.pack(pady=15)
+        c.execute("""SELECT * FROM tools""")
+        for i in c.fetchall():
+            for k in i:
+                label = Label(window, text=k)
+                label.pack()
         window.mainloop()
 
 class AddTool:
@@ -178,10 +237,78 @@ class AddTool:
         full_day_rate_label.pack()
         full_day_rate_entry = Entry(window)
         full_day_rate_entry.pack()
-        submit_button = Button(window , text="Submit", command=lambda: print("dsdsds"))
+        submit_button = Button(window , text="Submit", command=lambda:add_tool(tool_name_entry.get(), description_entry.get(), 
+                                                                                half_day_rate_entry.get(), full_day_rate_entry.get(), window)) 
         submit_button.pack()
 
+class BookTool:
+
+    def __init__(self):
+        window=Tk()
+        window.geometry('300x500')
+
+class ViewPage:
+
+    def __init__(self, data):
+        window = Tk()
+        window.geometry("300x500")
+        for i in data:
+            for k in i:
+                label = Label(window, text=k)
+                label.pack()
+        hire_button = Button(window, text="Hire", command=lambda : hire(CURRENT[0], i[0][0]))
+
+class HiredToolPage:
+
+    def __init__(self):
+        window = Tk()
+        window.geometry('300x500')
+        c.execute("""SELECT * FROM books WHERE username=?""", (SESSION[0], ))
+        a = c.fetchall()
+        for i in a:
+            label = Label(window, text=i[1])
+            label.pack()
+            button = Button(window, text="Return" , command=lambda : return_tool(i[1], window))
+            button.pack()
+
+class Invoice:
+
+    def __init__(self):
+        window = Tk()
+        window.geometry("300x500")
+        c.execute("""SELECT * FROM invoice WHERE username=?""", (CURRENT[0], ))
+        a = c.fetchall()
+        for i in a :
+            for k in i:
+                label = Label(window, text=k)
+                label.pack()
+
+        button = Button(window, text="Clear", command=lambda: dashboard_(window))
+        window.mainloop()
+
+
+def loginpage():
+    print('dssd')
+    l = Login()
+
+def viewpage(a):
+    v = ViewPage(a)
+
+def addtool(window):
+    window.destroy()
+    a = AddTool()
 
 def dashboard():
     d = Dashboard()
+
+def dashboard_(window):
+    window.destroy()
+    d = Dashboard()
+
+def hiretoolpage(window):
+    window.destroy()
+    h = HiredToolPage()
+def show_invoice():
+    i = Invoice()
+
 loginpage()
