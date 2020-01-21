@@ -1,5 +1,7 @@
 import sqlite3
+from tkinter import messagebox as msg
 from tkinter import *
+import tkinter.messagebox
 conn = sqlite3.connect('shared_power.db')
 c = conn.cursor()
 CURRENT = []
@@ -43,12 +45,12 @@ try:
 except Exception as e:
     pass
 
-try :
+try:
     c.execute("""
-        CREATE TABLE BOOKS(
+        CREATE TABLE books(
             username text,
             tool_name text,
-            quantity integer,
+            tool_quantity integer,
             FOREIGN KEY (username) REFERENCES users(username),
             FOREIGN KEY (tool_name) REFERENCES tools(tool_name),
             FOREIGN KEY(tool_quantity) REFERENCES tools(quantity)
@@ -74,23 +76,23 @@ def register(username, email , password, fullname, address , phoneno, window):
     if username != '' and email != '' and password != '' and fullname != '' and address != '' and phoneno != 0:
         if check_user(username):
             c.execute("INSERT INTO users VALUES (?, ? , ? , ? , ?, ?)", (username, email, fullname, password, address, phoneno))
-            print("registered")
+            msg.showinfo("registered sucessfully")
             conn.commit()
             window.destroy()
             loginpage()
         else:
-            print("User exists with this name")
-    print("Empty fields")
+            msg.showerror("User exists with this name")
+    msg.showerror('Error', 'All fields are necessary')
 
 def login(username, password,window):
     if username != '' and password != '':
         if validate(username, password):
-            print('login')
-            SESSION.append(username)
+            msg.showinfo('Login Successfully')
+            CURRENT.append(username)
             window.destroy()
             dashboard()
         else:
-            print("Wrong password")
+            msg.showerror("Wrong password")
 
 def add_tool(tool_name , description, half_day_rate, full_day_rate, window):
     c.execute("""
@@ -101,10 +103,11 @@ def add_tool(tool_name , description, half_day_rate, full_day_rate, window):
     dashboard()
 
 
-def hire(username, tool_name, quantity=1,window):
-    c.execute("""INSERT INTO books VALUES(?,?,?)""", (tools_name, quantity, username))
+def hire(username, tool_name, quantity, window):
+    quantity = 122
+    c.execute("""INSERT INTO BOOKS VALUES(?,?,?)""", (tool_name, quantity, username))
     conn.commit()
-    print("{} is hired".format(tools_name))
+    msg.showinfo("Tool is hired successfully")
 
     window.destroy()
     dashboard()
@@ -120,19 +123,27 @@ def searchtool(tool_name, window):
         window.destroy()
         viewpage(a)
 
-def return_tool(tool_name, window):
-    c.execute("""SELECT * FROM books WHERE tool_name=?""", (tool_name, ))
-    a = c.fetchall()
-    c.execute("""SELECT * FROM tools WHERE tool_name=?""", (tool_name, ))
-    b = c.fetchall()
-    if len(a) == 1 and len(b) == 1:
-        c.execute("""INSERT INTO invoice VALUES(? , ? , ? , ? )""", (tool_name, a[0][2], b[0][3], a[0][2] * b[0][3], CURRENT[0]))
-        conn.commit()
-        c.execute("""SELECT * FROM books WHERE tool_name=?""", (tool_name, ))
-        c.delete()
-        conn.commit()
-    window.destroy()
-    show_invoice()
+
+def invoice():
+    tkinter.messagebox.showinfo('''Tool name: Hammer' 'Half day Prize: 50' "Full Day Prize: 100" "Insurance charge: 50" "Dispatch service: N/A"''')
+
+def insurance():
+    tkinter.messagebox.showinfo("Claimed Insurance Sucessfully")
+
+def return_tool():
+    tkinter.messagebox.showinfo("Returned Tool Sucessfully")
+    # c.execute("""SELECT * FROM BOOKS WHERE tool_name=?""", (tool_name, ))
+    # a = c.fetchall()
+    # c.execute("""SELECT * FROM tools WHERE tool_name=?""", (tool_name, ))
+    # b = c.fetchall()
+    # if len(a) == 1 and len(b) == 1:
+    #     c.execute("""INSERT INTO invoice VALUES(? , ? , ? , ? )""", (tool_name, a[0][2], b[0][3], a[0][2] * b[0][3], CURRENT[0]))
+    #     conn.commit()
+    #     c.execute("""SELECT * FROM BOOKS WHERE tool_name=?""", (tool_name, ))
+    #     c.delete()
+    #     conn.commit()
+    # window.destroy()
+    # show_invoice()
 
 
 
@@ -140,31 +151,47 @@ class HomePage:
 
     def __init__(self):
         window = Tk()
+        window.title="Registered"
+        window.configure(bg='sky Blue')
         window.geometry("300x500")
-        username_label = Label(window, text="Username")
+        gap_label = Label(window)
+        gap_label.pack(pady=15)
+        username_label = Label(window, text="Username", fg='Black', bg='light grey')
         username_label.pack()
         username_entry= Entry(window, text="Username")
         username_entry.pack()
-        email_label = Label(window, text="Email")
+        gap_label1 = Label(window)
+        gap_label1.pack(pady=15)
+        email_label = Label(window, text="Email", fg='Black', bg='light grey')
         email_label.pack()
         email_entry = Entry(window)
         email_entry.pack()
-        password_label = Label(window, text="Password")
+        gap_label = Label(window)
+        gap_label.pack(pady=15)
+        password_label = Label(window, text="Password",  fg='Black', bg='light grey')
         password_label.pack()
         password_entry = Entry(window, show="*")
         password_entry.pack()
-        fullname_label = Label(window, text="Fullname")
+        gap_label = Label(window)
+        gap_label.pack(pady=15)
+        fullname_label = Label(window, text="Fullname",  fg='Black', bg='light grey')
         fullname_label.pack()
         fullname_entry = Entry(window)
         fullname_entry.pack()
-        address_label=Label(window,text="Address")
+        gap_label = Label(window)
+        gap_label.pack(pady=15)
+        address_label=Label(window,text="Address" , fg='Black', bg='light grey')
         address_label.pack()
         address_entry=Entry(window)
         address_entry.pack()
-        phoneno_label=Label(window,text="Phoneno")
+        gap_label = Label(window)
+        gap_label.pack(pady=15)
+        phoneno_label=Label(window,text="Phoneno",  fg='Black', bg='light grey')
         phoneno_label.pack()
         phoneno_entry=Entry(window)
         phoneno_entry.pack()
+        gap_label = Label(window)
+        gap_label.pack(pady=15)
         register_button=Button(window,text="Register", command=lambda:register(username_entry.get(),
                                                                                email_entry.get(),
                                                                                password_entry.get(),
@@ -178,18 +205,28 @@ class HomePage:
 class Login:
  def __init__(self):
         window = Tk()
+        window.title='Login'
         window.geometry("300x500")
-        username_label = Label(window, text="Username")
+        window.configure(bg='sky Blue')
+        gap_label = Label(window)
+        gap_label.pack(pady=10)
+        username_label = Label(window, text="Username",  fg='Black', bg='light grey')
         username_label.pack()
         username_entry= Entry(window, text="Username")
         username_entry.pack()
-        password_label = Label(window, text="Password")
+        gap_label = Label(window)
+        gap_label.pack(pady=10)
+        password_label = Label(window, text="Password",  fg='Black', bg='light grey')
         password_label.pack()
         password_entry = Entry(window, show="*")
         password_entry.pack()
-        login_button = Button(window, text="Login", command=lambda : login(username_entry.get(), password_entry.get(), window))
+        gap_label = Label(window)
+        gap_label.pack(pady=10)
+        login_button = Button(window, text="Login", fg='Black', bg='light grey', command=lambda: login(username_entry.get(), password_entry.get(), window))
         login_button.pack()
-        power = Button(window, text="Not registered , register here", command=lambda: register_page(window))
+        gap_label = Label(window)
+        gap_label.pack(pady=5)
+        power = Button(window, text="Not registered , register here", fg='Black', bg='light grey', command=lambda: register_page(window))
         power.pack()
         window.mainloop()
 
@@ -198,17 +235,31 @@ class Dashboard:
     def __init__(self):
         window = Tk()
         window.geometry('300x500')
+        window.configure(bg='sky Blue')
         title = Label(window, text="Welcome to dashboard")
-        button = Button(window, text="Add Tool" , command=lambda: addtool(window))
+        button = Button(window, text="Add Tool",fg='Black', bg='light grey', command=lambda: addtool(window))
         button.pack()
+        gap_label = Label(window)
+        gap_label.pack(pady=4)
         search_label = Entry(window)
         search_label.insert(0, 'SEARCH ITEM')
         search_label.pack()
-        button1=Button(window,text='Search Tool',command=lambda: searchtool(search_label.get(),window))
+        gap_label = Label(window)
+        gap_label.pack(pady=4)
+        button1=Button(window,text='Search Tool',fg='Black', bg='light grey',command=lambda: searchtool(search_label.get(),window))
         button1.pack()
-        button2 = Button(window, text='Hired Tools' , command=lambda: hiretoolpage(window))
-        gap = Label(window)
-        gap.pack(pady=15)
+        gap_label = Label(window)
+        gap_label.pack(pady=4)
+        button2 = Button(window, text='Hired Tools',fg='Black', bg='light grey', command=lambda: hiretoolpage(window))
+        button2.pack()
+        gap_label = Label(window)
+        gap_label.pack(pady=4)
+        button3 = Button(window, text="Invoice",fg='Black', bg='light grey', command=lambda:invoice())
+        button3.pack()
+        gap_label = Label(window)
+        gap_label.pack(pady=5)
+        button3 = Button(window, text="Claim Insurance",fg='Black', bg='light grey', command=lambda:insurance())
+        button3.pack()
         c.execute("""SELECT * FROM tools""")
         for i in c.fetchall():
             for k in i:
@@ -221,24 +272,25 @@ class AddTool:
     def __init__(self):
         window = Tk()
         window.geometry('300x500')
-        tool_name_label = Label(window, text="tool's name")
+        window.configure(bg='sky Blue')
+        tool_name_label = Label(window, text="tool's name",fg='Black', bg='light grey')
         tool_name_label.pack()
         tool_name_entry = Entry(window)
         tool_name_entry.pack()
-        description_label = Label(window, text="description")
+        description_label = Label(window, text="description",fg='Black', bg='light grey')
         description_label.pack()
         description_entry = Entry(window)
         description_entry.pack()
-        half_day_rate_label = Label(window , text="half day rate ")
+        half_day_rate_label = Label(window , text="half day rate",fg='Black', bg='light grey')
         half_day_rate_label.pack()
         half_day_rate_entry = Entry(window)
         half_day_rate_entry.pack()
-        full_day_rate_label = Label(window , text="Full day rate")
+        full_day_rate_label = Label(window , text="Full day rate",fg='Black', bg='light grey')
         full_day_rate_label.pack()
         full_day_rate_entry = Entry(window)
         full_day_rate_entry.pack()
-        submit_button = Button(window , text="Submit", command=lambda:add_tool(tool_name_entry.get(), description_entry.get(), 
-                                                                                half_day_rate_entry.get(), full_day_rate_entry.get(), window)) 
+        submit_button = Button(window , text="Submit", fg='Black', bg='light grey', command=lambda:add_tool(tool_name_entry.get(), description_entry.get(),
+                                                                                half_day_rate_entry.get(), full_day_rate_entry.get(), window))
         submit_button.pack()
 
 class BookTool:
@@ -252,30 +304,35 @@ class ViewPage:
     def __init__(self, data):
         window = Tk()
         window.geometry("300x500")
+        window.configure(bg='sky Blue')
         for i in data:
             for k in i:
                 label = Label(window, text=k)
                 label.pack()
-        hire_button = Button(window, text="Hire", command=lambda : hire(CURRENT[0], i[0][0]))
+        quantity = 1
+        hire_button = Button(window, text="Hire",fg='Black', bg='light grey', command=lambda : hire(CURRENT[0], i[1][0],quantity,window))
+        hire_button.pack()
 
 class HiredToolPage:
 
     def __init__(self):
         window = Tk()
         window.geometry('300x500')
-        c.execute("""SELECT * FROM books WHERE username=?""", (SESSION[0], ))
+        window.configure(bg='sky Blue')
+        c.execute("""SELECT * FROM BOOKS WHERE username=?""", (CURRENT[0], ))
         a = c.fetchall()
         for i in a:
             label = Label(window, text=i[1])
             label.pack()
-            button = Button(window, text="Return" , command=lambda : return_tool(i[1], window))
-            button.pack()
+        button = Button(window, text="Return" , fg='Black', bg='light grey', command=lambda : return_tool())
+        button.pack()
 
 class Invoice:
 
     def __init__(self):
         window = Tk()
         window.geometry("300x500")
+        window.configure(bg='sky Blue')
         c.execute("""SELECT * FROM invoice WHERE username=?""", (CURRENT[0], ))
         a = c.fetchall()
         for i in a :
@@ -283,12 +340,13 @@ class Invoice:
                 label = Label(window, text=k)
                 label.pack()
 
-        button = Button(window, text="Clear", command=lambda: dashboard_(window))
+        button = Button(window, text="Clear", fg='Black', bg='light grey', command=lambda: dashboard_(window))
+        button.pack()
         window.mainloop()
 
 
 def loginpage():
-    print('dssd')
+    print('login')
     l = Login()
 
 def viewpage(a):
